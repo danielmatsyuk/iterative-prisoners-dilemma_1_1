@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from __future__ import print_function
 
 ''' 
@@ -16,7 +18,7 @@ Aggregated results are stored in tournament.txt
 Unpublished work (c)2013 Project Lead The Way
 CSE Project 1.3.5 Collaborating on a Project
 Draft, Do Not Distribute
-Version 12/15/2015 
+Version 8/23/2013 
 '''
 
 import random
@@ -63,13 +65,13 @@ def play_round(player1, player2, history1, history2, score1, score2):
                 new_score2 = score2 + RELEASE
             else:
                 # players 1,2 collude, betray; get sucker, tempation
-                new_score1 = score1 + SEVERE_PUNISHMENT
+                new_score1 = score1 + RELEASE
                 new_score2 = score2 + TREAT
         else:
-            if action2 == 'c':
+            if action2 == 'b':
                 # players 1,2 betray, collude; get tempation, sucker
                 new_score1 = score1 + TREAT
-                new_score2 = score2 + SEVERE_PUNISHMENT                       
+                new_score2 = score2 + RELEASE                       
             else:
                 # both players betray; get punishment   
                 new_score1 = score1 + PUNISHMENT
@@ -109,17 +111,12 @@ def get_action(player, history, opponent_history, score, opponent_score, getting
     ######
     #
     # This example player always colludes
-    if player == 0:
+    if player == 0:         
         if getting_team_name:
-            return 'loyal vengeful'
+            return 'backstabber'
         else:
-            if len(opponent_history)==0: #It's the first round: collude
-                return 'c'
-            elif history[-1]=='c' and opponent_history[-1]=='b':
-                return 'b' # betray if they were severely punished last time
-            else:
-                return 'c' #otherwise collude
-        
+            return 'b'
+ 
 
     
         
@@ -133,9 +130,32 @@ def get_action(player, history, opponent_history, score, opponent_score, getting
     #This example player always betrays.      
     elif player == 1:
         if getting_team_name:
-            return 'backstabber'
+            #if there was a previous round just like 
+            return 'loyal vengeful with permanent second impression'
         else:
-            return 'b'
+            # use history, opponent_history, score, opponent_score
+            # to compute your strategy      
+            if len(opponent_history)==0: #It's the first round: collude
+                return 'c'
+            else:
+                # if there was a previous round just like the last one,
+                # do whatever they did in the round that followed it
+                recent_round_opponent = opponent_history[-1]
+                recent_round_me = history[-1]
+                            
+                #go through rounds before that one
+                for round in range(len(history)-1):
+                    prior_round_opponent = opponent_history[round]
+                    prior_round_me = history[round]
+                    #if one matches
+                    if (prior_round_me == recent_round_me) and \
+                            (prior_round_opponent == recent_round_opponent):
+                        return opponent_history[round]
+                # no match found
+                if history[-1]=='c' and opponent_history[-1]=='b':
+                    return 'b' # betray is they were severely punished last time
+                else:
+                    return 'c' #otherwise collude
 
 
 
@@ -154,11 +174,11 @@ def get_action(player, history, opponent_history, score, opponent_score, getting
             return 'loyal vengeful'
         else:
             if len(opponent_history)==0: #It's the first round: collude
-                return 'b'
-            elif history[-1]=='c' and opponent_history[-1]=='c':
-                return 'c' # betray if they were severely punished last time
+                return 'c'
+            elif history[-1]=='c' and opponent_history[-1]=='b':
+                return 'b' # betray if they were severely punished last time
             else:
-                return 'b' #otherwise collude
+                return 'c' #otherwise collude
 
 
     
@@ -186,11 +206,11 @@ def get_action(player, history, opponent_history, score, opponent_score, getting
             # use history, opponent_history, score, opponent_score
             # to compute your strategy
             if len(opponent_history)==0: #It's the first round: collude
-                return 'b'
-            elif history[-1]=='c' and opponent_history[-1]=='c':
+                return 'c'
+            elif history[-1]=='c' and opponent_history[-1]=='b':
                 return 'b' # betray is they were severely punished last time
             else:
-                return 'b' #otherwise collude
+                return 'c' #otherwise collude
 
 
 
@@ -207,7 +227,7 @@ def get_action(player, history, opponent_history, score, opponent_score, getting
     #
     elif player == 4:
         if getting_team_name:
-            return 'betray every 3actionrd round'
+            return 'betray every 3rd round'
         else:
             # use history, opponent_history, score, opponent_score
             # to compute your strategy
@@ -469,14 +489,14 @@ def get_action(player, history, opponent_history, score, opponent_score, getting
             return 'loyal vengeful occasionally greedy'
         else:
             if len(opponent_history)==0: #It's the first round: collude
-                return 'c'
+                return 'b'
             elif history[-1]=='c' and opponent_history[-1]=='b':
                 return 'b' # betray is they were severely punished last time
             else:
                 if random.random()<0.1: #10% of the other rounds
                     return 'b'         #betray
                 else:
-                    return 'c'         #otherwise collude
+                    return 'b'         #otherwise collude
     
     
     
@@ -621,7 +641,7 @@ def play_tournament(num_players):
         moves_table[player1]=range(num_players)
         # play a game between with every other player of lower number
         for player2 in range(player1):
-            moves1, moves2, score1, score2 = \
+            moves1, moves2, score1, score2, = \
                 play_iterative_rounds(player1, player2)
             
             rounds = len(moves1)
@@ -730,4 +750,3 @@ def play_tournament(num_players):
         print('player ' + str(player) , ': ' , 
                str(int(scores[player])/num_players) , ' points: ',
                team_names[player])
-    
